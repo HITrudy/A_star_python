@@ -2,8 +2,12 @@ import time
 import numpy as np
 from matplotlib.patches import Rectangle
 import heapq
-import point
-#open_dict的作用，
+import sys
+sys.path.append("..")
+from utils import a_star_point as point
+from obs_map.obs_map import ObstacleMap
+import matplotlib.pyplot as plt
+
 class AStar:#加入起点终点
     def __init__(self, map, start, end):
         self.map = map
@@ -13,7 +17,6 @@ class AStar:#加入起点终点
         self.close_set = set()  # 已访问节点集合
         self.counter = 0  # 用于打破优先级相同时的平局
         self.open_dict = {}  # 跟踪开放列表中的节点，用于检测重复
-#这个map根据传入到参数的决定的，在main函数中，我们传入了random_map，故这个map会指向我们的ranodnmmap
 
     def HeuristicCost(self, p):#欧式距离，公式等价于求对角线的长度，终点被定义为右上角，传入终点坐标，修改计算。
         x_dis = self.end.x - 1 - p.x
@@ -23,9 +26,8 @@ class AStar:#加入起点终点
     def IsValidPoint(self, x, y):
         if x < 0 or y < 0 or x >= self.map.size or y >= self.map.size:
             return False
-        return not self.map.IsObstacle(x, y)
+        return (self.map[x, y] == 0)
 
-# 起点，终点也不是对点。
     def IsStartPoint(self, p):
         return p.x == self.start.x and p.y == self.start.y
 
@@ -33,23 +35,18 @@ class AStar:#加入起点终点
         return p.x == self.end.x and p.y == self.end.y
 
     def RunAndSaveImage(self, ax, plt):
-        #总结来说：这个方法干了三件事，一，初始化，将起点加入最小堆和字典中，二，取出对应堆顶节点，三，遍历8个方向的节点，
-        self.SaveInitialState(ax, plt)
+        # self.SaveInitialState(ax, plt)
         start_point = self.start
         start_point.g = 0
         start_point.h = self.HeuristicCost(start_point)
-        #将open_set加入到最小堆中，评价指标是括号内的内容，这一步还是在初始化，了解一下最小堆怎么实现的
         heapq.heappush(self.open_set, (start_point.g + start_point.h, self.counter, start_point))
         self.counter += 1
-        #open_dict的作用，可以快速查找open_set中的内容
         self.open_dict[(start_point.x, start_point.y)] = start_point
         start_time = time.time()
-        #因为最小堆中存着同一个节点的不同实例，故我们会先判断是否在open_dict（一定是最新的点）中
         while self.open_set:
-            #取出堆顶节点，按三元组存储的，取的时候我们也是对应位置取出
             _, _, current = heapq.heappop(self.open_set)
             key = (current.x, current.y)
-            if key in self.open_dict:  # 检查键是否存在
+            if key in self.open_dict:  
                 del self.open_dict[key]
             else:
                 continue  # 跳过已移除的旧条目
@@ -58,7 +55,6 @@ class AStar:#加入起点终点
                 return self.BuildPath(current, ax, plt, start_time)
 
             self.close_set.add((current.x, current.y))
-            #处理8个方向的节点
             for dx in [-1, 0, 1]:
                 for dy in [-1, 0, 1]:
                     if dx == 0 and dy == 0:
@@ -73,6 +69,7 @@ class AStar:#加入起点终点
 
         while p is not None:
             path.insert(0, p)
+            self.map[p.x, p.y] = 0.5
             if self.IsStartPoint(p):
                 break
             p = p.parent
@@ -82,7 +79,7 @@ class AStar:#加入起点终点
         if not path or not self.IsStartPoint(path[0]):
             print("错误：无法构建完整路径，路径可能不连通！")
             return []
-        self.SaveFinalPath(path, ax, plt)
+        
         end_time = time.time()
         print(f'算法完成，耗时：{end_time - start_time:.2f} 秒')
         print(f'路径长度：{len(path)} 步')
@@ -119,18 +116,11 @@ class AStar:#加入起点终点
             self.counter += 1
             self.open_dict[(x, y)] = neighbor
 
-
-    def SaveInitialState(self, ax, plt):
-        plt.imshow(self.map.map, cmap='Greys', interpolation='nearest')
-        ax.add_patch(Rectangle((self.start.x,self.start.y), 1, 1, color='red', label='起点'))
-        ax.add_patch(Rectangle((self.end.x, self.end.y), 1, 1, color='blue', label='终点'))
-        plt.title('初始地图（红色=起点，蓝色=终点，黑色=障碍物）')
-        plt.legend()
-        plt.draw()
-        plt.savefig('initial_state.png', dpi=300)
-
-    def SaveFinalPath(self, path, ax, plt):
-        for p in path:
-            ax.add_patch(Rectangle((p.x, p.y), 1, 1, color='green', alpha=0.5))
-        plt.title('寻路结果（绿色=路径）')
-        plt.savefig('final_path.png', dpi=300)
+if __name__ == "__main__":
+    map = ObstacleMap(100, mode = 'random', random_para=[10,10])
+    start = point.Point(0, 0)
+    end = point.Point(90, 90)
+    astar = AStar(map.map, start, end)
+    astar.RunAndSaveImage(0, 0)
+    plt.imshow(astar.map, cmap='Greys', interpolation='nearest')
+    plt.show()
