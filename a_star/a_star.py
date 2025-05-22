@@ -7,6 +7,7 @@ sys.path.append("..")
 from utils import a_star_point as point
 from obs_map.obs_map import ObstacleMap
 import matplotlib.pyplot as plt
+import random
 
 class AStar:#加入起点终点
     def __init__(self, map, start, end):
@@ -24,7 +25,7 @@ class AStar:#加入起点终点
         return x_dis + y_dis + (np.sqrt(2) - 2) * min(x_dis, y_dis)
 
     def IsValidPoint(self, x, y):
-        if x < 0 or y < 0 or x >= self.map.size or y >= self.map.size:
+        if x < 0 or y < 0 or x >= self.map.shape[0] or y >= self.map.shape[1]:
             return False
         return (self.map[x, y] == 0)
 
@@ -34,7 +35,7 @@ class AStar:#加入起点终点
     def IsEndPoint(self, p):
         return p.x == self.end.x and p.y == self.end.y
 
-    def RunAndSaveImage(self, ax, plt):
+    def RunAStar(self):
         # self.SaveInitialState(ax, plt)
         start_point = self.start
         start_point.g = 0
@@ -52,7 +53,7 @@ class AStar:#加入起点终点
                 continue  # 跳过已移除的旧条目
 
             if self.IsEndPoint(current):
-                return self.BuildPath(current, ax, plt, start_time)
+                return self.BuildPath(current, start_time)
 
             self.close_set.add((current.x, current.y))
             for dx in [-1, 0, 1]:
@@ -64,9 +65,8 @@ class AStar:#加入起点终点
 
         print('No path found, algorithm failed!!!')
 
-    def BuildPath(self, p, ax, plt, start_time):
+    def BuildPath(self, p, start_time):
         path = []
-
         while p is not None:
             path.insert(0, p)
             self.map[p.x, p.y] = 0.5
@@ -116,11 +116,16 @@ class AStar:#加入起点终点
             self.counter += 1
             self.open_dict[(x, y)] = neighbor
 
-if __name__ == "__main__":
+def random_test():
     map = ObstacleMap(100, mode = 'random', random_para=[10,10])
-    start = point.Point(0, 0)
-    end = point.Point(90, 90)
+    while True:
+        start = point.Point(random.randint(0,99), random.randint(0,99))
+        end = point.Point(random.randint(0,99), random.randint(0,99))
+        if not (map.map[start.x, start.y] or map.map[end.x, end.y]) : break
     astar = AStar(map.map, start, end)
-    astar.RunAndSaveImage(0, 0)
+    astar.RunAStar()
     plt.imshow(astar.map, cmap='Greys', interpolation='nearest')
     plt.show()
+
+if __name__ == "__main__":
+    random_test()
