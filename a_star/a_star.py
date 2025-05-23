@@ -1,6 +1,5 @@
 import time
 import numpy as np
-from matplotlib.patches import Rectangle
 import heapq
 import sys
 sys.path.append("..")
@@ -46,11 +45,11 @@ class AStar:#加入起点终点
         start_time = time.time()
         while self.open_set:
             _, _, current = heapq.heappop(self.open_set)
-            key = (current.x, current.y)
-            if key in self.open_dict:  
-                del self.open_dict[key]
-            else:
-                continue  # 跳过已移除的旧条目
+            # key = (current.x, current.y)
+            # if key in self.open_dict:  
+            #     del self.open_dict[key]
+            # else:
+            #     continue
 
             if self.IsEndPoint(current):
                 return self.BuildPath(current, start_time)
