@@ -4,10 +4,12 @@ import heapq
 import sys
 sys.path.append("..")
 from utils import ha_star_point as point
+from utils import visualization
 from obs_map.obs_map import ObstacleMap
 import matplotlib.pyplot as plt
 import random
 from math import cos, sin, tan, floor
+import dubins
 
 class HAStar:#加入起点终点
     def __init__(self, map, start, end):
@@ -22,9 +24,15 @@ class HAStar:#加入起点终点
         self.wheelbase = 3
 
     def HeuristicCost(self, p):
-        x_dis = self.end.x - 1 - p.x
-        y_dis = self.end.y - 1 - p.y
-        return x_dis + y_dis + (np.sqrt(2) - 2) * min(x_dis, y_dis)
+        start = (p.x, p.y, p.phi)
+        end = (self.end.x, self.end.y, self.end.phi)
+        return dubins.shortest_path(start, end, self.wheelbase/sin(0.6)).path_length()
+    
+    # # Euclidean distance
+    # def HeuristicCost(self, p):
+    #     x_dis = self.end.x - 1 - p.x
+    #     y_dis = self.end.y - 1 - p.y
+    #     return x_dis + y_dis + (np.sqrt(2) - 2) * min(x_dis, y_dis)
 
     def IsValidPoint(self, x, y):
         if x < 0 or y < 0 or x >= self.map.shape[0] or y >= self.map.shape[1]:
@@ -109,7 +117,7 @@ class HAStar:#加入起点终点
             self.open_dict[(floor(x), floor(y), floor(phi*10))] = neighbor
 
 def random_test():
-    map = ObstacleMap(100, mode = 'random', random_para=[0,0])
+    map = ObstacleMap(100, mode = 'random', random_para=[10,0])
     # while True:
     #     start = point.Point(random.randint(0,99), random.randint(0,99))
     #     end = point.Point(random.randint(0,99), random.randint(0,99))
@@ -117,8 +125,8 @@ def random_test():
     start = point.Point(0, 0, 0)
     end = point.Point(90, 90, 0)
     astar = HAStar(map.map, start, end)
-    print("hello")
-    astar.RunHAStar()
+    path = astar.RunHAStar()
+    visualization.visualize_obstacles(map, path)
     plt.imshow(astar.map, cmap='Greys', interpolation='nearest')
     plt.show()
 
