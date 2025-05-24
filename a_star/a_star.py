@@ -19,8 +19,8 @@ class AStar:#加入起点终点
         self.open_dict = {}  # 跟踪开放列表中的节点，用于检测重复
 
     def HeuristicCost(self, p):#欧式距离，公式等价于求对角线的长度，终点被定义为右上角，传入终点坐标，修改计算。
-        x_dis = self.end.x - 1 - p.x
-        y_dis = self.end.y - 1 - p.y
+        x_dis = self.end.x - p.x
+        y_dis = self.end.y - p.y
         return x_dis + y_dis + (np.sqrt(2) - 2) * min(x_dis, y_dis)
 
     def IsValidPoint(self, x, y):
@@ -116,10 +116,10 @@ class AStar:#加入起点终点
             self.open_dict[(x, y)] = neighbor
 
 def random_test():
-    map = ObstacleMap(100, mode = 'random', random_para=[10,10])
+    map = ObstacleMap(500, mode = 'random', random_para=[20,20])
     while True:
-        start = point.Point(random.randint(0,99), random.randint(0,99))
-        end = point.Point(random.randint(0,99), random.randint(0,99))
+        start = point.Point(random.randint(0, map.size - 1), random.randint(0, map.size - 1))
+        end = point.Point(random.randint(0, map.size - 1), random.randint(0, map.size - 1))
         if not (map.map[start.x, start.y] or map.map[end.x, end.y]) : break
     astar = AStar(map.map, start, end)
     astar.RunAStar()
