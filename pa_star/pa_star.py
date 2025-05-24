@@ -20,7 +20,7 @@ class ParallelAStar:
         # 线程共享数据结构
         self.open_queue = queue.PriorityQueue()  # 线程安全优先队列
         self.close_set = set()
-        self.open_dict = dict()  # 快速查询节点状态
+        self.open_dict = {}  # 快速查询节点状态
         self.lock = threading.Lock()  # 共享资源锁
         self.found_event = threading.Event()  # 路径找到事件
         self.counter = 0  # 节点插入顺序计数器
