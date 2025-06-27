@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import datetime
 
 def draw_circle(c_x, c_y, c_r):
     theta = np.linspace(0, 2 * np.pi, 100)  # 参数化角度
@@ -50,4 +51,8 @@ def visualize_obstacles(map, path):
     plt.plot(path_x, path_y, 'g--', linewidth=2, label='Path')  # 绿色虚线表示路径
     plt.legend()
     plt.axis('equal')
+    current_time = datetime.now()
+    print(current_time)
+    # plt.savefig(f"pic/sample_plot_{current_time}.png")
     plt.show()
+    plt.clf()

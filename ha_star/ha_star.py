@@ -65,6 +65,7 @@ class HAStar:#加入起点终点
             for delta in [-0.6, -0.6/2, 0, 0.6/2, 0.6]:
                 self.ProcessPoint(current, delta)
         print('No path found, algorithm failed!!!')
+        return []
 
     def BuildPath(self, p, start_time):
         path = []
@@ -126,9 +127,11 @@ def random_test():
     end = point.Point(90, 90, 0)
     astar = HAStar(map.map, start, end)
     path = astar.RunHAStar()
+    if len(path) == 0 : return
     visualization.visualize_obstacles(map, path)
-    plt.imshow(astar.map, cmap='Greys', interpolation='nearest')
-    plt.show()
+    # plt.imshow(astar.map, cmap='Greys', interpolation='nearest')
+    # plt.show()
 
 if __name__ == "__main__":
-    random_test()
+    for _ in range(12):
+        random_test()
