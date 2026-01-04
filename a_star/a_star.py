@@ -116,7 +116,7 @@ class AStar:#加入起点终点
             self.open_dict[(x, y)] = neighbor
 
 def random_test():
-    map = ObstacleMap(500, mode = 'random', random_para=[20,20])
+    map = ObstacleMap(100, mode = 'random', random_para=[10,10])
     while True:
         start = point.Point(random.randint(0, map.size - 1), random.randint(0, map.size - 1))
         end = point.Point(random.randint(0, map.size - 1), random.randint(0, map.size - 1))
@@ -126,5 +126,17 @@ def random_test():
     plt.imshow(astar.map, cmap='Greys', interpolation='nearest')
     plt.show()
 
+def batch_test(num):
+    for _ in range(num):
+        map = ObstacleMap(50, mode = 'random', random_para=[6,6])
+        while True:
+            start = point.Point(random.randint(0, map.size - 1), random.randint(0, map.size - 1))
+            end = point.Point(random.randint(0, map.size - 1), random.randint(0, map.size - 1))
+            if not (map.map[start.x, start.y] or map.map[end.x, end.y]) : break
+        astar = AStar(map.map, start, end)
+        astar.RunAStar()
+        plt.imshow(astar.map, cmap='Greys', interpolation='nearest')
+        plt.show()
+
 if __name__ == "__main__":
-    random_test()
+    batch_test(1)
