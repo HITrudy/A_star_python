@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import random
 from math import cos, sin, tan, floor
 import dubins
+import os
 
 class HAStar:#加入起点终点
     def __init__(self, map, start, end):
@@ -22,6 +23,11 @@ class HAStar:#加入起点终点
         self.open_dict = {}  
         self.step_size = 2
         self.wheelbase = 3
+        self.costmap = np.ones((map.shape[0], map.shape[1], 63))*100
+
+        # np.set_printoptions(threshold=np.inf, linewidth=np.inf)
+        # print(map)
+        # print(self.costmap[: , :, 1])
 
     def HeuristicCost(self, p):
         start = (p.x, p.y, p.phi)
@@ -55,7 +61,7 @@ class HAStar:#加入起点终点
         start_time = time.time()
         while self.open_set:
             _, _, current = heapq.heappop(self.open_set)
-
+            self.costmap[floor(current.x), floor(current.y), floor(current.phi*10)] = current.g
             # print(current.x,current.y)
             if self.IsEndPoint(current):
                 return self.BuildPath(current, start_time)
@@ -64,6 +70,7 @@ class HAStar:#加入起点终点
 
             for delta in [-0.6, -0.6/2, 0, 0.6/2, 0.6]:
                 self.ProcessPoint(current, delta)
+                self.ProcessReversePoint(current, delta)
         print('No path found, algorithm failed!!!')
         return []
 
@@ -99,21 +106,53 @@ class HAStar:#加入起点终点
 
         move_cost = self.step_size
         delta_cost = abs(current.delta - delta) * 1.0
-        g = current.g + move_cost + delta_cost
+        g = current.g + move_cost
 
         if (floor(x), floor(y), floor(phi*10)) in self.open_dict:
             existing_node = self.open_dict[(floor(x), floor(y), floor(phi*10))]
             if g < existing_node.g:
                 existing_node.parent = current  # 确保更新父节点
                 existing_node.g = g
-                heapq.heappush(self.open_set, (g + existing_node.h, self.counter, existing_node))
+                heapq.heappush(self.open_set, (g, self.counter, existing_node))
                 self.counter += 1
             return
         else:
-            neighbor.h = self.HeuristicCost(neighbor)
+            # neighbor.h = self.HeuristicCost(neighbor)
             neighbor.parent = current
             neighbor.g = g
-            heapq.heappush(self.open_set, (neighbor.g + neighbor.h, self.counter, neighbor))
+            heapq.heappush(self.open_set, (neighbor.g, self.counter, neighbor))
+            self.counter += 1
+            self.open_dict[(floor(x), floor(y), floor(phi*10))] = neighbor
+
+    def ProcessReversePoint(self, current, delta):
+        x = current.x - self.step_size*cos(current.phi)
+        y = current.y - self.step_size*sin(current.phi)
+        phi = (current.phi - self.step_size*tan(delta)/self.wheelbase) % 6.28
+
+        if not self.IsValidPoint(floor(x), floor(y)):
+            return
+        if (floor(x), floor(y), floor(phi*10)) in self.close_set:
+            return
+        
+        neighbor = point.Point(x, y, phi)
+
+        move_cost = self.step_size
+        delta_cost = abs(current.delta - delta) * 1.0
+        g = current.g + move_cost
+
+        if (floor(x), floor(y), floor(phi*10)) in self.open_dict:
+            existing_node = self.open_dict[(floor(x), floor(y), floor(phi*10))]
+            if g < existing_node.g:
+                existing_node.parent = current  # 确保更新父节点
+                existing_node.g = g
+                heapq.heappush(self.open_set, (g, self.counter, existing_node))
+                self.counter += 1
+            return
+        else:
+            # neighbor.h = self.HeuristicCost(neighbor)
+            neighbor.parent = current
+            neighbor.g = g
+            heapq.heappush(self.open_set, (neighbor.g, self.counter, neighbor))
             self.counter += 1
             self.open_dict[(floor(x), floor(y), floor(phi*10))] = neighbor
 
@@ -132,6 +171,37 @@ def random_test():
     # plt.imshow(astar.map, cmap='Greys', interpolation='nearest')
     # plt.show()
 
+def batch_test(num):
+    save_dir = '50x50'  # 你想放的目录
+    os.makedirs(save_dir, exist_ok=True)  # 没有就新建，有就忽略
+
+    for _ in range(num):
+        map = ObstacleMap(50, mode = 'random', random_para=[6,6])
+        while True:
+            start = point.Point(random.randint(0, map.size - 1), random.randint(0, map.size - 1), random.randint(0,62))
+            start = point.Point(random.randint(0, map.size - 1), random.randint(0, map.size - 1), -2.5)
+            end = point.Point(map.size + 1, map.size + 1, 0)
+
+            if not (map.map[start.x, start.y]) : break
+        dijk = HAStar(map.map, start, end)
+        dijk.RunHAStar()
+
+        # plt.imshow(dijk.map, cmap='Greys', interpolation='nearest')
+        # plt.show()
+        # for i in range(63):
+        #     plt.imshow(dijk.costmap[:,:,i], cmap='Greys', interpolation='nearest')
+        #     plt.show()
+
+        new_map = np.expand_dims(dijk.map, axis=-1)
+        new_costmap = dijk.costmap
+        new_end = np.array([start.x, start.y, start.phi])
+
+        np.savez_compressed(
+            os.path.join(save_dir, f'sample_{_:06d}.npz'),
+            map=new_map,
+            costmap=new_costmap,
+            end=new_end
+        )
+
 if __name__ == "__main__":
-    for _ in range(1):
-        random_test()
+    batch_test(1)
